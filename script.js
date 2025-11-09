@@ -95,7 +95,14 @@ async function calcularYActualizar() {
 
 async function compararBancos() {
     const bancoComp = document.getElementById("bancoComparacion").value;
-
+    if (!datoPrincipal) {
+        Swal.fire({
+            icon: "error",
+            title: "Préstamo no calculado",
+            text: "Primero calcula el préstamo principal."
+        });
+        return;
+    }
     if (!bancoComp) {
        Swal.fire({
             icon: "error",
@@ -105,14 +112,7 @@ async function compararBancos() {
         return;
     }
 
-    if (!datoPrincipal) {
-        Swal.fire({
-            icon: "error",
-            title: "Préstamo no calculado",
-            text: "Primero calcula el préstamo principal."
-        });
-        return;
-    }
+
 
     if (bancoComp === datoPrincipal.banco) {
         Swal.fire({
@@ -307,42 +307,62 @@ function mostrarComparacion() {
 }
 
 function validarCampos() {
-    const monto = document.getElementById("monto").value.trim();
-    const cuotas = document.getElementById("cuotas").value.trim();
+    const montoRaw = document.getElementById("monto").value.trim();
+    const cuotasRaw = document.getElementById("cuotas").value.trim();
     const banco = document.getElementById("banco").value;
 
+    const monto = montoRaw === "" ? NaN : Number(montoRaw);
+    const cuotas = cuotasRaw === "" ? NaN : Number(cuotasRaw);
+
     // Validar monto
-    if (monto === "" || isNaN(monto) || Number(monto) <= 0) {
+    if (montoRaw === "" || Number.isNaN(monto)) {
         Swal.fire({
             icon: "error",
             title: "Monto inválido",
-            text: "Ingresá un monto mayor a 0. Ejemplo: 150000"
+            text: "Ingresá un monto numérico. Ejemplo: 150000"
+        });
+        return false;
+    }
+
+    if (monto <= 0) {
+        Swal.fire({
+            icon: "error",
+            title: "Monto inválido",
+            text: "El monto debe ser mayor que 0."
         });
         return false;
     }
 
     // Validar cuotas
-    if (cuotas === "" || isNaN(cuotas) || Number(cuotas) <= 0) {
+    if (cuotasRaw === "" || Number.isNaN(cuotas)) {
         Swal.fire({
             icon: "error",
             title: "Cantidad de cuotas inválida",
-            text: "Ingresá un número de cuotas mayor a 0."
+            text: "Ingresá un número de cuotas válido. Ejemplo: 12"
         });
         return false;
     }
 
-    // Máximo cuotas razonable
-    if (Number(cuotas) > 360) {
+    if (!Number.isInteger(cuotas) || cuotas <= 0) {
+        Swal.fire({
+            icon: "error",
+            title: "Cuotas inválidas",
+            text: "La cantidad de cuotas debe ser un número entero mayor a 0."
+        });
+        return false;
+    }
+
+    if (cuotas > 70) {
         Swal.fire({
             icon: "warning",
             title: "Demasiadas cuotas",
-            text: "Ingresá un valor menor a 360 cuotas."
+            text: "Ingresá un valor menor o igual a 70 cuotas."
         });
         return false;
     }
 
-    // Validar banco seleccionado
-    if (!banco || banco === "") {
+    // Validar banco
+    if (!banco || banco.trim() === "") {
         Swal.fire({
             icon: "error",
             title: "Banco no seleccionado",
@@ -353,6 +373,7 @@ function validarCampos() {
 
     return true;
 }
+
 
 
 function actualizarGraficos(tabla) {
@@ -808,6 +829,6 @@ function actualizarTabla(tabla) {
 }
 
 // Calcular automáticamente al cargar
-window.addEventListener('load', () => {
-    calcularYActualizar();
-});
+// window.addEventListener('load', () => {
+   
+// });
