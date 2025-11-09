@@ -12,6 +12,7 @@ from scrapers.macro_chrome import MacroScraper
 from scrapers.mp import MercadoPagoScraper
 from scrapers.naranjax import NaranjaXScraper
 from scrapers.santander import SantanderScraper
+from scrapers.patagonia import PatagoniaScraperOptimized
 
 # Sirve todo desde la raíz
 app = Flask(__name__, static_folder=".", template_folder=".")
@@ -63,7 +64,8 @@ scrapers_dict = {
     "NaranjaX": NaranjaXScraper(),
     "BBVA": BBVAScraper(),
     "Galicia": GaliciaScraper(),
-    "MercadoPago": MercadoPagoScraper()
+    "MercadoPago": MercadoPagoScraper(),
+    "Patagonia": PatagoniaScraperOptimized()
 }
 
 @app.route("/")

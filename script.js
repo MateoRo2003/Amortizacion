@@ -112,8 +112,6 @@ async function compararBancos() {
         return;
     }
 
-
-
     if (bancoComp === datoPrincipal.banco) {
         Swal.fire({
             icon: "error",
@@ -374,8 +372,6 @@ function validarCampos() {
     return true;
 }
 
-
-
 function actualizarGraficos(tabla) {
     // Gráfico de evolución del saldo
     const ctxSaldo = document.getElementById('chartSaldo').getContext('2d');
@@ -575,68 +571,6 @@ function actualizarGraficosComparacion() {
             }
         }
     });
-
-    // Gráfico de evolución comparada
-    const ctxSaldosComp = document.getElementById('chartComparacionSaldos').getContext('2d');
-    if (charts.comparacionSaldos) charts.comparacionSaldos.destroy();
-    charts.comparacionSaldos = new Chart(ctxSaldosComp, {
-        type: 'line',
-        data: {
-            labels: tabla1.map(r => `${r.Cuota}`),
-            datasets: [{
-                label: datoPrincipal.banco,
-                data: tabla1.map(r => r.Saldo),
-                borderColor: '#667eea',
-                backgroundColor: 'rgba(102, 126, 234, 0.1)',
-                tension: 0.4
-            }, {
-                label: datoComparacion.banco,
-                data: tabla2.map(r => r.Saldo),
-                borderColor: '#f5576c',
-                backgroundColor: 'rgba(245, 87, 108, 0.1)',
-                tension: 0.4
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            plugins: {
-                legend: { position: 'bottom' }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        callback: function (value) {
-                            return '$' + value.toLocaleString();
-                        }
-                    }
-                }
-            }
-        }
-    });
-
-    // Gráfico de intereses comparados
-    const ctxInteresesComp = document.getElementById('chartComparacionIntereses').getContext('2d');
-    if (charts.comparacionIntereses) charts.comparacionIntereses.destroy();
-    charts.comparacionIntereses = new Chart(ctxInteresesComp, {
-        type: 'doughnut',
-        data: {
-            labels: [datoPrincipal.banco, datoComparacion.banco],
-            datasets: [{
-                label: 'Interés Total',
-                data: [interes1, interes2],
-                backgroundColor: ['#667eea', '#f5576c']
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            plugins: {
-                legend: { position: 'bottom' }
-            }
-        }
-    });
 }
 
 function actualizarTablaResumen() {
@@ -828,7 +762,31 @@ function actualizarTabla(tabla) {
     document.getElementById("tablaAmortizacion").innerHTML = html;
 }
 
+// Función para cambiar entre pestañas
+function openTab(tabId) {
+    // Ocultar todas las pestañas
+    const tabContents = document.getElementsByClassName('tab-content');
+    for (let i = 0; i < tabContents.length; i++) {
+        tabContents[i].classList.remove('active');
+    }
+    
+    // Desactivar todos los botones
+    const tabButtons = document.getElementsByClassName('tab-button');
+    for (let i = 0; i < tabButtons.length; i++) {
+        tabButtons[i].classList.remove('active');
+    }
+    
+    // Activar la pestaña seleccionada
+    document.getElementById(tabId).classList.add('active');
+    event.currentTarget.classList.add('active');
+}
+
 // Calcular automáticamente al cargar
-// window.addEventListener('load', () => {
-   
-// });
+window.addEventListener('load', () => {
+    // Establecer valores por defecto
+    document.getElementById('monto').value = 150000;
+    document.getElementById('cuotas').value = 12;
+    
+    // Calcular automáticamente
+    calcularYActualizar();
+});

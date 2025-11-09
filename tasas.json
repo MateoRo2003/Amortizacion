@@ -6,12 +6,6 @@
         "CFTEA": 227.31
     },
     {
-        "Banco": "BNA",
-        "TNA": 44.62,
-        "TEA": 54.99,
-        "CFTEA": null
-    },
-    {
         "Banco": "Macro",
         "TNA": 105.0,
         "TEA": 173.62,
@@ -40,6 +34,18 @@
         "TNA": 249.0,
         "TEA": 860.0,
         "CFTEA": 1370.28
+    },
+    {
+        "Banco": "Patagonia",
+        "TNA": 120.0,
+        "TEA": 214.07,
+        "CFTEA": 292.22
+    },
+    {
+        "Banco": "BNA",
+        "TNA": 44.62,
+        "TEA": 54.99,
+        "CFTEA": null
     },
     {
         "Banco": "BCRA",

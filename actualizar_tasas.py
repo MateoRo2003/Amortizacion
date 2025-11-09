@@ -1,6 +1,8 @@
 import os
 import json
 
+
+
 # Forzar working directory al del script
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
@@ -12,6 +14,7 @@ from scrapers.macro_chrome import MacroScraper
 from scrapers.mp import MercadoPagoScraper
 from scrapers.naranjax import NaranjaXScraper
 from scrapers.santander import SantanderScraper
+from scrapers.patagonia import PatagoniaScraperOptimized
 
 scrapers_dict = {
     "Santander": SantanderScraper(),
@@ -21,7 +24,8 @@ scrapers_dict = {
     "NaranjaX": NaranjaXScraper(),
     "BBVA": BBVAScraper(),
     "Galicia": GaliciaScraper(),
-    "MercadoPago": MercadoPagoScraper()
+    "MercadoPago": MercadoPagoScraper(),
+    "Patagonia": PatagoniaScraperOptimized()
 }
 
 def actualizar_tasas():
