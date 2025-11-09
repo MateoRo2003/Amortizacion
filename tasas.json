@@ -42,15 +42,15 @@
         "CFTEA": 165.29
     },
     {
-        "Banco": "BCRA",
-        "TNA": 82.44,
-        "TEA": null,
-        "CFTEA": null
-    },
-    {
         "Banco": "BNA",
         "TNA": 44.62,
         "TEA": 54.99,
+        "CFTEA": null
+    },
+    {
+        "Banco": "BCRA",
+        "TNA": 82.44,
+        "TEA": null,
         "CFTEA": null
     }
 ]
