@@ -13,25 +13,25 @@ function formatearPesos(valor) {
 // Cálculo de métricas financieras - SOLO cuando no vienen del backend
 function calcularMetricas(tna, monto, cuotas, totalPagar, datosBackend = {}) {
     // TEM - Tasa Efectiva Mensual (siempre calcular, no viene del backend)
-    const tem = ((1 + tna / 100) ** (1/12) - 1) * 100;
-    
+    const tem = ((1 + tna / 100) ** (1 / 12) - 1) * 100;
+
     // TEA - Tasa Efectiva Anual
     // Usar del backend si existe, sino calcular
     const tea = datosBackend.TEA !== null && datosBackend.TEA !== undefined
-        ? datosBackend.TEA 
+        ? datosBackend.TEA
         : ((1 + tem / 100) ** 12 - 1) * 100;
-    
+
     // CFT - Costo Financiero Total (total de intereses)
     const cft = totalPagar - monto;
-    
+
     // CFTNA - CFT Nominal Anual (como porcentaje)
     const cftna = (cft / monto) * (12 / cuotas) * 100;
-    
+
     // CFTEA - Usar del backend si existe, sino calcular basado en CFTNA
     const cftea = datosBackend.CFTEA !== null && datosBackend.CFTEA !== undefined
         ? datosBackend.CFTEA
         : ((1 + cftna / 100) ** 1 - 1) * 100; // Aproximación simple
-    
+
     return {
         tem: tem.toFixed(2),
         tea: tea.toFixed(2),
@@ -44,6 +44,9 @@ function calcularMetricas(tna, monto, cuotas, totalPagar, datosBackend = {}) {
 }
 
 async function calcularYActualizar() {
+    if (!validarCampos()) {
+        return; // detiene todo
+    }
     const monto = document.getElementById("monto").value;
     const cuotas = document.getElementById("cuotas").value;
     const banco = document.getElementById("banco").value;
@@ -78,7 +81,7 @@ async function calcularYActualizar() {
         };
 
         actualizarDashboard(data, banco);
-        
+
         // Si hay comparación activa, actualizarla
         if (datoComparacion) {
             mostrarComparacion();
@@ -92,19 +95,31 @@ async function calcularYActualizar() {
 
 async function compararBancos() {
     const bancoComp = document.getElementById("bancoComparacion").value;
-    
+
     if (!bancoComp) {
-        alert("Por favor selecciona un banco para comparar");
+       Swal.fire({
+            icon: "error",
+            title: "Banco inválido",
+            text: "Selecciona un banco"
+        });
         return;
     }
 
     if (!datoPrincipal) {
-        alert("Primero calcula el préstamo principal");
+        Swal.fire({
+            icon: "error",
+            title: "Préstamo no calculado",
+            text: "Primero calcula el préstamo principal."
+        });
         return;
     }
 
     if (bancoComp === datoPrincipal.banco) {
-        alert("Selecciona un banco diferente al principal");
+        Swal.fire({
+            icon: "error",
+            title: "Banco inválido",
+            text: "Selecciona un banco diferente al principal."
+        });
         return;
     }
 
@@ -124,7 +139,7 @@ async function compararBancos() {
         });
 
         const data = await res.json();
-        
+
         if (data.error) {
             alert(data.error);
             return;
@@ -147,7 +162,7 @@ function limpiarComparacion() {
     datoComparacion = null;
     document.getElementById("bancoComparacion").value = "";
     document.getElementById("comparacionSection").style.display = "none";
-    
+
     // Limpiar subtítulos de comparación
     document.querySelectorAll('.kpi-subtitle').forEach(el => el.textContent = '');
     document.querySelectorAll('.metrica-comp').forEach(el => el.textContent = '');
@@ -173,27 +188,27 @@ function actualizarDashboard(data, banco) {
         TEA: data.TEA || null,
         CFTEA: data.CFTEA || null
     };
-    
+
     const metricas = calcularMetricas(data.TNA, monto, cuotas, totalPagar, datosBackend);
-    
+
     // Mostrar TEM (siempre calculada)
     document.getElementById("tem").textContent = metricas.tem + "%";
-    
+
     // Mostrar TEA con indicador si fue calculada
-    document.getElementById("tea").innerHTML = metricas.tea + "%" + 
+    document.getElementById("tea").innerHTML = metricas.tea + "%" +
         (metricas.teaCalculada ? ' <span style="font-size: 10px; opacity: 0.7;">*</span>' : '');
-    
+
     // Mostrar CFT (siempre calculado)
     document.getElementById("cft").textContent = formatearPesos(metricas.cft);
-    
+
     // Mostrar CFTNA (siempre calculado)
     document.getElementById("cftna").textContent = metricas.cftna + "%";
-    
+
     // Actualizar sección de CFTEA (nueva métrica)
     // Si existe el elemento, actualizarlo
     const cfteaElement = document.getElementById("cftea");
     if (cfteaElement) {
-        cfteaElement.innerHTML = metricas.cftea + "%" + 
+        cfteaElement.innerHTML = metricas.cftea + "%" +
             (metricas.cfteaCalculada ? ' <span style="font-size: 10px; opacity: 0.7;">*</span>' : '');
     }
 
@@ -209,13 +224,13 @@ function mostrarComparacion() {
 
     const tabla1 = datoPrincipal.data.Tabla;
     const tabla2 = datoComparacion.data.Tabla;
-    
+
     const total1 = tabla1.reduce((sum, row) => sum + row.Cuota_total, 0);
     const total2 = tabla2.reduce((sum, row) => sum + row.Cuota_total, 0);
-    
+
     const interes1 = tabla1.reduce((sum, row) => sum + row.Interes, 0);
     const interes2 = tabla2.reduce((sum, row) => sum + row.Interes, 0);
-    
+
     const cuota1 = tabla1[0].Cuota_total;
     const cuota2 = tabla2[0].Cuota_total;
 
@@ -231,7 +246,7 @@ function mostrarComparacion() {
         TEA: datoComparacion.data.TEA || null,
         CFTEA: datoComparacion.data.CFTEA || null
     };
-    
+
     const metricas1 = calcularMetricas(datoPrincipal.data.TNA, monto, cuotas, total1, datosBackend1);
     const metricas2 = calcularMetricas(datoComparacion.data.TNA, monto, cuotas, total2, datosBackend2);
 
@@ -241,16 +256,16 @@ function mostrarComparacion() {
     const difCuota = cuota2 - cuota1;
     const difTNA = datoComparacion.data.TNA - datoPrincipal.data.TNA;
 
-    document.getElementById("totalPagarComp").innerHTML = 
+    document.getElementById("totalPagarComp").innerHTML =
         `${datoComparacion.banco}: ${formatearPesos(total2)} <span class="${difTotal > 0 ? 'diferencia-negativa' : 'diferencia-positiva'}">(${difTotal > 0 ? '+' : ''}${formatearPesos(difTotal)})</span>`;
-    
-    document.getElementById("interesTotalComp").innerHTML = 
+
+    document.getElementById("interesTotalComp").innerHTML =
         `${datoComparacion.banco}: ${formatearPesos(interes2)} <span class="${difInteres > 0 ? 'diferencia-negativa' : 'diferencia-positiva'}">(${difInteres > 0 ? '+' : ''}${formatearPesos(difInteres)})</span>`;
-    
-    document.getElementById("cuotaMensualComp").innerHTML = 
+
+    document.getElementById("cuotaMensualComp").innerHTML =
         `${datoComparacion.banco}: ${formatearPesos(cuota2)} <span class="${difCuota > 0 ? 'diferencia-negativa' : 'diferencia-positiva'}">(${difCuota > 0 ? '+' : ''}${formatearPesos(difCuota)})</span>`;
-    
-    document.getElementById("tnaAplicadaComp").innerHTML = 
+
+    document.getElementById("tnaAplicadaComp").innerHTML =
         `${datoComparacion.banco}: ${datoComparacion.data.TNA}% <span class="${difTNA > 0 ? 'diferencia-negativa' : 'diferencia-positiva'}">(${difTNA > 0 ? '+' : ''}${difTNA.toFixed(2)}%)</span>`;
 
     // Actualizar comparación de métricas
@@ -259,17 +274,17 @@ function mostrarComparacion() {
     const difCFT = parseFloat(metricas2.cft) - parseFloat(metricas1.cft);
     const difCFTNA = parseFloat(metricas2.cftna) - parseFloat(metricas1.cftna);
 
-    document.getElementById("temComp").innerHTML = 
+    document.getElementById("temComp").innerHTML =
         `${datoComparacion.banco}: ${metricas2.tem}% <span class="${difTEM > 0 ? 'diferencia-negativa' : 'diferencia-positiva'}">(${difTEM > 0 ? '+' : ''}${difTEM.toFixed(2)}%)</span>`;
-    
+
     const indicadorTEA2 = metricas2.teaCalculada ? ' <span style="font-size: 10px;">*</span>' : '';
-    document.getElementById("teaComp").innerHTML = 
+    document.getElementById("teaComp").innerHTML =
         `${datoComparacion.banco}: ${metricas2.tea}%${indicadorTEA2} <span class="${difTEA > 0 ? 'diferencia-negativa' : 'diferencia-positiva'}">(${difTEA > 0 ? '+' : ''}${difTEA.toFixed(2)}%)</span>`;
-    
-    document.getElementById("cftComp").innerHTML = 
+
+    document.getElementById("cftComp").innerHTML =
         `${datoComparacion.banco}: ${formatearPesos(metricas2.cft)} <span class="${difCFT > 0 ? 'diferencia-negativa' : 'diferencia-positiva'}">(${difCFT > 0 ? '+' : ''}${formatearPesos(difCFT)})</span>`;
-    
-    document.getElementById("cftnaComp").innerHTML = 
+
+    document.getElementById("cftnaComp").innerHTML =
         `${datoComparacion.banco}: ${metricas2.cftna}% <span class="${difCFTNA > 0 ? 'diferencia-negativa' : 'diferencia-positiva'}">(${difCFTNA > 0 ? '+' : ''}${difCFTNA.toFixed(2)}%)</span>`;
 
     // Actualizar CFTEA si existe el elemento
@@ -277,7 +292,7 @@ function mostrarComparacion() {
     if (cfteaCompElement) {
         const difCFTEA = parseFloat(metricas2.cftea) - parseFloat(metricas1.cftea);
         const indicadorCFTEA2 = metricas2.cfteaCalculada ? ' <span style="font-size: 10px;">*</span>' : '';
-        cfteaCompElement.innerHTML = 
+        cfteaCompElement.innerHTML =
             `${datoComparacion.banco}: ${metricas2.cftea}%${indicadorCFTEA2} <span class="${difCFTEA > 0 ? 'diferencia-negativa' : 'diferencia-positiva'}">(${difCFTEA > 0 ? '+' : ''}${difCFTEA.toFixed(2)}%)</span>`;
     }
 
@@ -286,10 +301,59 @@ function mostrarComparacion() {
 
     // Actualizar gráficos de comparación
     actualizarGraficosComparacion();
-    
+
     // Actualizar tabla resumen
     actualizarTablaResumen();
 }
+
+function validarCampos() {
+    const monto = document.getElementById("monto").value.trim();
+    const cuotas = document.getElementById("cuotas").value.trim();
+    const banco = document.getElementById("banco").value;
+
+    // Validar monto
+    if (monto === "" || isNaN(monto) || Number(monto) <= 0) {
+        Swal.fire({
+            icon: "error",
+            title: "Monto inválido",
+            text: "Ingresá un monto mayor a 0. Ejemplo: 150000"
+        });
+        return false;
+    }
+
+    // Validar cuotas
+    if (cuotas === "" || isNaN(cuotas) || Number(cuotas) <= 0) {
+        Swal.fire({
+            icon: "error",
+            title: "Cantidad de cuotas inválida",
+            text: "Ingresá un número de cuotas mayor a 0."
+        });
+        return false;
+    }
+
+    // Máximo cuotas razonable
+    if (Number(cuotas) > 360) {
+        Swal.fire({
+            icon: "warning",
+            title: "Demasiadas cuotas",
+            text: "Ingresá un valor menor a 360 cuotas."
+        });
+        return false;
+    }
+
+    // Validar banco seleccionado
+    if (!banco || banco === "") {
+        Swal.fire({
+            icon: "error",
+            title: "Banco no seleccionado",
+            text: "Por favor elegí un banco principal."
+        });
+        return false;
+    }
+
+    return true;
+}
+
 
 function actualizarGraficos(tabla) {
     // Gráfico de evolución del saldo
@@ -318,7 +382,7 @@ function actualizarGraficos(tabla) {
                 y: {
                     beginAtZero: true,
                     ticks: {
-                        callback: function(value) {
+                        callback: function (value) {
                             return '$' + value.toLocaleString();
                         }
                     }
@@ -330,7 +394,7 @@ function actualizarGraficos(tabla) {
     // Gráfico de composición
     const totalInteres = tabla.reduce((sum, r) => sum + r.Interes, 0);
     const totalAmortizacion = tabla.reduce((sum, r) => sum + r.Amortizacion, 0);
-    
+
     const ctxComp = document.getElementById('chartComposicion').getContext('2d');
     if (charts.composicion) charts.composicion.destroy();
     charts.composicion = new Chart(ctxComp, {
@@ -373,10 +437,10 @@ function actualizarGraficos(tabla) {
             maintainAspectRatio: true,
             scales: {
                 x: { stacked: true },
-                y: { 
+                y: {
                     stacked: true,
                     ticks: {
-                        callback: function(value) {
+                        callback: function (value) {
                             return '$' + value.toLocaleString();
                         }
                     }
@@ -408,7 +472,7 @@ function actualizarGraficos(tabla) {
                 y: {
                     beginAtZero: true,
                     ticks: {
-                        callback: function(value) {
+                        callback: function (value) {
                             return '$' + value.toLocaleString();
                         }
                     }
@@ -450,7 +514,7 @@ function actualizarGraficosComparacion() {
                 y: {
                     beginAtZero: true,
                     ticks: {
-                        callback: function(value) {
+                        callback: function (value) {
                             return '$' + value.toLocaleString();
                         }
                     }
@@ -482,7 +546,7 @@ function actualizarGraficosComparacion() {
                 y: {
                     beginAtZero: true,
                     ticks: {
-                        callback: function(value) {
+                        callback: function (value) {
                             return '$' + value.toLocaleString();
                         }
                     }
@@ -522,7 +586,7 @@ function actualizarGraficosComparacion() {
                 y: {
                     beginAtZero: true,
                     ticks: {
-                        callback: function(value) {
+                        callback: function (value) {
                             return '$' + value.toLocaleString();
                         }
                     }
@@ -557,7 +621,7 @@ function actualizarGraficosComparacion() {
 function actualizarTablaResumen() {
     const tabla1 = datoPrincipal.data.Tabla;
     const tabla2 = datoComparacion.data.Tabla;
-    
+
     const total1 = tabla1.reduce((sum, row) => sum + row.Cuota_total, 0);
     const total2 = tabla2.reduce((sum, row) => sum + row.Cuota_total, 0);
     const interes1 = tabla1.reduce((sum, row) => sum + row.Interes, 0);
@@ -696,10 +760,10 @@ function actualizarTablaResumen() {
                     ${ahorro > 0 ? '✅ Mejor Opción' : '⚠️ Opción más Costosa'}
                 </h4>
                 <p style="color: #333;">
-                    ${ahorro > 0 
-                        ? `Eligiendo <strong>${datoPrincipal.banco}</strong> ahorrarías <strong>${formatearPesos(Math.abs(ahorro))}</strong> en comparación con ${datoComparacion.banco}.`
-                        : `Eligiendo <strong>${datoComparacion.banco}</strong> ahorrarías <strong>${formatearPesos(Math.abs(ahorro))}</strong> en comparación con ${datoPrincipal.banco}.`
-                    }
+                    ${ahorro > 0
+                ? `Eligiendo <strong>${datoPrincipal.banco}</strong> ahorrarías <strong>${formatearPesos(Math.abs(ahorro))}</strong> en comparación con ${datoComparacion.banco}.`
+                : `Eligiendo <strong>${datoComparacion.banco}</strong> ahorrarías <strong>${formatearPesos(Math.abs(ahorro))}</strong> en comparación con ${datoPrincipal.banco}.`
+            }
                 </p>
             </div>
         `;
