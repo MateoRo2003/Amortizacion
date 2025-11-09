@@ -757,7 +757,7 @@ function actualizarTablaResumen() {
         html += `
             <div style="margin-top: 20px; padding: 15px; background: ${ahorro > 0 ? '#dcfce7' : '#fee2e2'}; border-radius: 8px;">
                 <h4 style="margin-bottom: 10px; color: ${ahorro > 0 ? '#16a34a' : '#dc2626'};">
-                    ${ahorro > 0 ? '✅ Mejor Opción' : '⚠️ Opción más Costosa'}
+                    ${ahorro > 0 ? 'Mejor Opción' : 'Opción más Costosa'}
                 </h4>
                 <p style="color: #333;">
                     ${ahorro > 0
