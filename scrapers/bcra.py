@@ -42,8 +42,6 @@ class BCRAScraper:
         return {
             "Banco": self.nombre_banco,
             "TNA": tna,
-            "TEA": None,
-            "CFTEA": None
         }
 
 if __name__ == "__main__":

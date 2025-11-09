@@ -94,6 +94,93 @@ def api_calcular():
                 cftea = t.get("CFTEA")
                 break
 
+    # Solo scrapea si falta TNA
+    if tna is None:
+        scraper = scrapers_dict[banco]
+        tasas = scraper.obtener_tasas()
+        tna = tasas.get("TNA")
+        tea = tasas.get("TEA")
+        cftea = tasas.get("CFTEA")
+
+        if tna:
+            guardar_tasa_individual(banco, tna, tea, cftea)
+
+    if tna is None:
+        return jsonify({"error": "No se pudo obtener TNA del banco"}), 500
+
+    tabla = generar_tabla_amortizacion(monto, n_cuotas, tna)
+
+    return jsonify({
+        "Banco": banco,
+        "TNA": tna,
+        "TEA": tea,
+        "CFTEA": cftea,
+        "Tabla": tabla
+    })
+
+    data = request.json
+    monto = float(data.get("monto", 0))
+    n_cuotas = int(data.get("cuotas", 1))
+    banco = data.get("banco")
+
+    if banco not in scrapers_dict:
+        return jsonify({"error": "Banco no válido"}), 400
+
+    tasas_guardadas = cargar_tasas()
+    tna = tea = cftea = None
+
+    # Buscar en tasas.json
+    if tasas_guardadas:
+        for t in tasas_guardadas:
+            if t["Banco"] == banco:
+                tna = t.get("TNA")
+                tea = t.get("TEA")
+                cftea = t.get("CFTEA")
+                break
+
+    # Solo scrapea si no hay TNA
+    if tna is None:
+        scraper = scrapers_dict[banco]
+        tasas = scraper.obtener_tasas()
+        tna = tasas.get("TNA")
+        tea = tasas.get("TEA")
+        cftea = tasas.get("CFTEA")
+
+        if tna:
+            guardar_tasa_individual(banco, tna, tea, cftea)
+
+    if tna is None:
+        return jsonify({"error": "No se pudo obtener TNA del banco"}), 500
+
+    tabla = generar_tabla_amortizacion(monto, n_cuotas, tna)
+
+    return jsonify({
+        "Banco": banco,
+        "TNA": tna,
+        "TEA": tea,      # puede ser None
+        "CFTEA": cftea,  # puede ser None
+        "Tabla": tabla
+    })
+    data = request.json
+    monto = float(data.get("monto", 0))
+    n_cuotas = int(data.get("cuotas", 1))
+    banco = data.get("banco")
+
+    if banco not in scrapers_dict:
+        return jsonify({"error": "Banco no válido"}), 400
+
+    tasas_guardadas = cargar_tasas()
+    tna = tea = cftea = None
+
+    # Buscar en tasas.json
+    if tasas_guardadas:
+        for t in tasas_guardadas:
+            if t["Banco"] == banco:
+                tna = t.get("TNA")
+                tea = t.get("TEA")
+                cftea = t.get("CFTEA")
+                break
+
     # Si faltan datos, scrapeamos
     if tna is None or tea is None or cftea is None:
         scraper = scrapers_dict[banco]
