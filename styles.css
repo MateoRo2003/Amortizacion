@@ -119,7 +119,7 @@ body {
 
 @media (max-width: 1024px) {
     .right-panel {
-        overflow-y: visible;
+       
         max-height: none;
     }
 }
