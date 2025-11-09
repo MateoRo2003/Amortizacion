@@ -690,6 +690,363 @@ body {
     }
 }
 
+/* Soporte para modo oscuro */
+/* Soporte para modo oscuro mejorado */
+@media (prefers-color-scheme: dark) {
+    body {
+        background: linear-gradient(135deg, #1e3a8a 0%, #581c87 100%);
+    }
+
+    .header {
+        background: #1f2937 !important;
+        color: #f9fafb !important;
+    }
+
+    .header h1 {
+        color: #f9fafb !important;
+    }
+
+    .logo {
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%) !important;
+    }
+
+    /* Filtros */
+    .filters {
+        background: #374151 !important;
+        color: #f9fafb !important;
+        border: 1px solid #4b5563 !important;
+    }
+
+    .filters h3, .filters h4 {
+        color: #e5e7eb !important;
+    }
+
+    .filter-group label {
+        color: #d1d5db !important;
+    }
+
+    .filter-group input, .filter-group select {
+        background: #4b5563 !important;
+        border-color: #6b7280 !important;
+        color: #f9fafb !important;
+        transition: all 0.3s ease;
+    }
+
+    .filter-group input:focus, .filter-group select:focus {
+        border-color: #6366f1 !important;
+        background: #52525b !important;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+
+    .filter-group input::placeholder {
+        color: #9ca3af !important;
+    }
+
+    /* Cards de KPIs - Mantener gradientes pero ajustar brillo */
+    .kpi-card.pink { 
+        background: linear-gradient(135deg, #ec4899 0%, #f43f5e 100%) !important;
+        filter: brightness(1.1);
+    }
+    .kpi-card.purple { 
+        background: linear-gradient(135deg, #8b5cf6 0%, #06b6d4 100%) !important;
+        filter: brightness(1.1);
+    }
+    .kpi-card.orange { 
+        background: linear-gradient(135deg, #f97316 0%, #eab308 100%) !important;
+        filter: brightness(1.1);
+    }
+    .kpi-card.blue { 
+        background: linear-gradient(135deg, #0ea5e9 0%, #7e22ce 100%) !important;
+        filter: brightness(1.1) !important;
+    }
+
+    /* Métricas adicionales */
+    .metricas-adicionales {
+        background: rgba(55, 65, 81, 0.8) !important;
+        backdrop-filter: blur(12px) !important;
+        border: 1px solid #4b5563 !important;
+    }
+
+    .metricas-adicionales h3 {
+        color: #e5e7eb !important;
+    }
+
+    .metrica-item {
+        background: #374151 !important;
+        color: #f9fafb !important;
+        border: 1px solid #4b5563 !important;
+    }
+
+    .metrica-label {
+        color: #d1d5db !important;
+    }
+
+    .metrica-value {
+        color: #60a5fa !important;
+    }
+
+    .metrica-comp {
+        color: #9ca3af !important;
+    }
+
+    /* Chart Cards */
+    .chart-card {
+        background: #374151 !important;
+        color: #f9fafb !important;
+        border: 1px solid #4b5563 !important;
+    }
+
+    .chart-card h3 {
+        color: #e5e7eb !important;
+    }
+
+    .chart-icon {
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%) !important;
+    }
+
+    /* Tabs */
+    .tabs-container {
+        background: #374151 !important;
+        border: 1px solid #4b5563 !important;
+    }
+
+    .tabs-header {
+        background: #4b5563 !important;
+        border-bottom-color: #6b7280 !important;
+    }
+
+    .tab-button {
+        background: #4b5563 !important;
+        color: #d1d5db !important;
+        transition: all 0.3s ease !important;
+    }
+
+    .tab-button.active {
+        background: #374151 !important;
+        color: #60a5fa !important;
+        border-bottom-color: #60a5fa !important;
+    }
+
+    .tab-button:hover:not(.active) {
+        background: #52525b !important;
+        color: #e5e7eb !important;
+    }
+
+    /* Tablas */
+    #tablaAmortizacion table,
+    #tablaResumenComparativo table {
+        background: #374151 !important;
+        color: #f9fafb !important;
+        border: 1px solid #4b5563 !important;
+    }
+
+    #tablaAmortizacion th,
+    #tablaResumenComparativo th {
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%) !important;
+        color: #f9fafb !important;
+        border-bottom: 2px solid #6b7280 !important;
+    }
+
+    #tablaAmortizacion td,
+    #tablaResumenComparativo td {
+        color: #e5e7eb !important;
+        border-bottom: 1px solid #4b5563 !important;
+        background: #374151 !important;
+    }
+
+    #tablaAmortizacion tr:hover,
+    #tablaResumenComparativo tr:hover {
+        background: #4b5563 !important;
+    }
+
+    #tablaAmortizacion tr:nth-child(even),
+    #tablaResumenComparativo tr:nth-child(even) {
+        background: #3f4a5c !important;
+    }
+
+    #tablaAmortizacion tr:nth-child(even):hover,
+    #tablaResumenComparativo tr:nth-child(even):hover {
+        background: #52525b !important;
+    }
+
+    /* Comparación Banner */
+    .comparacion-banner {
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%) !important;
+        border: 1px solid #818cf8 ;
+    }
+
+    /* Loading */
+    .loading {
+        background: rgba(55, 65, 81, 0.9) !important;
+        color: #e5e7eb !important;
+        border: 1px solid #4b5563 !important; 
+    }
+
+    /* Botones */
+    .btn-calcular {
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%) !important;
+        color: white !important;
+        border: 1px solid #818cf8 !important;
+    }
+
+    .btn-comparar {
+        background: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%) !important;
+        color: white !important;
+        border: 1px solid #22d3ee !important;
+    }
+
+    .btn-limpiar {
+        background: linear-gradient(135deg, #ec4899 0%, #f43f5e 100%) !important;
+        color: white !important;
+        border: 1px solid #f472b6 !important;
+    }
+
+    .btn-calcular:hover, .btn-comparar:hover, .btn-limpiar:hover {
+        filter: brightness(1.15) !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+    }
+
+    /* Diferencias en tablas */
+    .diferencia-positiva {
+        color: #34d399 !important;
+        font-weight: bold            !important;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
+    }
+
+    .diferencia-negativa {
+        color: #f87171 !important;
+        font-weight: bold !important;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
+    }
+
+    /* Scrollbar en modo oscuro */
+    ::-webkit-scrollbar-track {
+        background: #374151 !important;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: #6366f1 !important;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: #8b5cf6 !important;
+    }
+
+    /* Mejoras para gráficos en modo oscuro */
+    .chart-card canvas {
+        filter: brightness(0.9) contrast(1.1) !important;
+    }
+
+    /* Efectos de profundidad */
+    .filters,
+    .chart-card,
+    .tabs-container,
+    .metrica-item,
+    .kpi-card {
+        box-shadow: 
+            0 4px 6px -1px rgba(0, 0, 0, 0.3) !important,
+            0 2px 4px -1px rgba(0, 0, 0, 0.2) !important,
+            inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+    }
+
+    /* Estados de hover mejorados */
+    .metrica-item:hover,
+    .chart-card:hover,
+    .filters:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 
+            0 8px 15px -3px rgba(0, 0, 0, 0.4) !important,
+            0 4px 6px -2px rgba(0, 0, 0, 0.3) !important,
+            inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+        border-color: #6b7280 !important;
+    }
+
+    /* Transiciones suaves */
+    .filters,
+    .chart-card,
+    .tabs-container,
+    .metrica-item,
+    .kpi-card,
+    .tab-button,
+    .filter-group input,
+    .filter-group select {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }
+
+    /* Textos de subtítulos */
+    .kpi-subtitle,
+    .metrica-comp {
+        color: #9ca3af !important;
+        opacity: 0.9 !important;
+    }
+
+    /* Iconos en modo oscuro */
+    .kpi-icon {
+        opacity: 0.4 !important;
+        filter: brightness(1.2) !important;
+    }
+
+    /* Mejora de contraste para textos importantes */
+    .kpi-value,
+    .metrica-value {
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
+    }
+
+    /* Bordes sutiles para mejor definición */
+    .header,
+    .filters,
+    .chart-card,
+    .tabs-container,
+    .metricas-adicionales,
+    .metrica-item {
+        border: 1px solid !important;
+        border-image: linear-gradient(135deg, #4b5563, #6b7280) 1 !important;
+    }
+}
+
+/* Efectos de glassmorphism para modo oscuro */
+@media (prefers-color-scheme: dark) and (min-width: 768px) {
+    .metricas-adicionales {
+        background: rgba(55, 65, 81, 0.7) !important;
+        backdrop-filter: blur(16px) !important;
+        -webkit-backdrop-filter: blur(16px) !important;
+    }
+
+    .filters,
+    .chart-card {
+        background: rgba(55, 65, 81, 0.8);
+        backdrop-filter: blur(12px) !important;
+        -webkit-backdrop-filter: blur(12px) !important;
+    }
+}
+
+/* Mejora para dispositivos con alto contraste en modo oscuro */
+@media (prefers-color-scheme: dark) and (prefers-contrast: high) {
+    .kpi-card {
+        filter: brightness(1.3) !important;
+    }
+    
+    .filter-group input, 
+    .filter-group select {
+        border-width: 2px;
+    }
+    
+    .tab-button.active {
+        border-bottom-width: 3px;
+    }
+}
+
+/* Animaciones sutiles para modo oscuro */
+@media (prefers-color-scheme: dark) {
+    @keyframes gentleGlow {
+        0%, 100% { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3); }
+        50% { box-shadow: 0 4px 12px -1px rgba(99, 102, 241, 0.2); }
+    }
+
+    .kpi-card:hover {
+        animation: gentleGlow 2s ease-in-out infinite;
+    }
+}
 
 /* Soporte para alta densidad de píxeles */
 @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
