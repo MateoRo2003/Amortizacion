@@ -13,10 +13,9 @@ from scrapers.mp import MercadoPagoScraper
 from scrapers.naranjax import NaranjaXScraper
 from scrapers.santander import SantanderScraper
 
-# Sirve absolutamente todo desde la raíz
+# Sirve todo desde la raíz
 app = Flask(__name__, static_folder=".", template_folder=".")
 
-# Ruta para servir cualquier archivo estático de la raíz
 @app.route('/<path:filename>')
 def serve_root_files(filename):
     return send_from_directory('.', filename)
@@ -48,11 +47,12 @@ def cargar_tasas():
     try:
         with open(file_path, "r", encoding="utf-8") as f:
             data = json.load(f)
-            if not isinstance(data, list) or len(data) == 0:
-                return None
-            return data
+            if isinstance(data, list) and len(data) > 0:
+                return data
     except:
-        return None
+        pass
+
+    return None
 
 
 scrapers_dict = {
@@ -71,7 +71,6 @@ def home():
     return send_from_directory('.', 'index.html')
 
 @app.route("/api/calcular", methods=["POST"])
-@app.route("/api/calcular", methods=["POST"])
 def api_calcular():
     data = request.json
     monto = float(data.get("monto", 0))
@@ -82,23 +81,29 @@ def api_calcular():
         return jsonify({"error": "Banco no válido"}), 400
 
     tasas_guardadas = cargar_tasas()
-    tna = None
+    tna = tea = cftea = None
 
+    # Buscar en tasas.json
     if tasas_guardadas:
         for t in tasas_guardadas:
             if t["Banco"] == banco:
-                tna = t["TNA"]
+                tna = t.get("TNA")
+                tea = t.get("TEA")
+                cftea = t.get("CFTEA")
                 break
 
-    # Si NO hay TNA en el archivo, saco del scraper
-    if tna is None:
+    # Si faltan datos, scrapeamos
+    if tna is None or tea is None or cftea is None:
         scraper = scrapers_dict[banco]
         tasas = scraper.obtener_tasas()
-        tna = tasas.get("TNA")
 
-        # Si obtuve un valor válido, lo escribo en tasas.json
+        tna = tasas.get("TNA")
+        tea = tasas.get("TEA")
+        cftea = tasas.get("CFTEA")
+
+        # Guardar para la próxima
         if tna:
-            guardar_tasa_individual(banco, tna)
+            guardar_tasa_individual(banco, tna, tea, cftea)
 
     if tna is None:
         return jsonify({"error": "No se pudo obtener TNA del banco"}), 500
@@ -108,14 +113,24 @@ def api_calcular():
     return jsonify({
         "Banco": banco,
         "TNA": tna,
+        "TEA": tea,
+        "CFTEA": cftea,
         "Tabla": tabla
     })
-def guardar_tasa_individual(banco, tna):
+
+def guardar_tasa_individual(banco, tna, tea, cftea):
     file_path = "tasas.json"
     tasas = cargar_tasas() or []
-    # Remover si ya existe
+
     tasas = [t for t in tasas if t["Banco"] != banco]
-    tasas.append({"Banco": banco, "TNA": tna})
+
+    tasas.append({
+        "Banco": banco,
+        "TNA": tna,
+        "TEA": tea,
+        "CFTEA": cftea
+    })
+
     with open(file_path, "w", encoding="utf-8") as f:
         json.dump(tasas, f, indent=4, ensure_ascii=False)
 

@@ -10,13 +10,16 @@ function formatearPesos(valor) {
     }).format(valor);
 }
 
-// Cálculo de métricas financieras
-function calcularMetricas(tna, monto, cuotas, totalPagar) {
-    // TEM - Tasa Efectiva Mensual
+// Cálculo de métricas financieras - SOLO cuando no vienen del backend
+function calcularMetricas(tna, monto, cuotas, totalPagar, datosBackend = {}) {
+    // TEM - Tasa Efectiva Mensual (siempre calcular, no viene del backend)
     const tem = ((1 + tna / 100) ** (1/12) - 1) * 100;
     
     // TEA - Tasa Efectiva Anual
-    const tea = ((1 + tem / 100) ** 12 - 1) * 100;
+    // Usar del backend si existe, sino calcular
+    const tea = datosBackend.TEA !== null && datosBackend.TEA !== undefined
+        ? datosBackend.TEA 
+        : ((1 + tem / 100) ** 12 - 1) * 100;
     
     // CFT - Costo Financiero Total (total de intereses)
     const cft = totalPagar - monto;
@@ -24,11 +27,19 @@ function calcularMetricas(tna, monto, cuotas, totalPagar) {
     // CFTNA - CFT Nominal Anual (como porcentaje)
     const cftna = (cft / monto) * (12 / cuotas) * 100;
     
+    // CFTEA - Usar del backend si existe, sino calcular basado en CFTNA
+    const cftea = datosBackend.CFTEA !== null && datosBackend.CFTEA !== undefined
+        ? datosBackend.CFTEA
+        : ((1 + cftna / 100) ** 1 - 1) * 100; // Aproximación simple
+    
     return {
         tem: tem.toFixed(2),
         tea: tea.toFixed(2),
         cft: cft.toFixed(2),
-        cftna: cftna.toFixed(2)
+        cftna: cftna.toFixed(2),
+        cftea: cftea.toFixed(2),
+        teaCalculada: datosBackend.TEA === null || datosBackend.TEA === undefined,
+        cfteaCalculada: datosBackend.CFTEA === null || datosBackend.CFTEA === undefined
     };
 }
 
@@ -53,7 +64,7 @@ async function calcularYActualizar() {
         });
 
         const data = await res.json();
-        
+        console.log("Respuesta del backend:", data);
         if (data.error) {
             alert(data.error);
             return;
@@ -157,11 +168,34 @@ function actualizarDashboard(data, banco) {
     document.getElementById("tnaAplicada").textContent = data.TNA + "%";
 
     // Calcular y actualizar métricas financieras
-    const metricas = calcularMetricas(data.TNA, monto, cuotas, totalPagar);
+    // Pasar datos del backend (TEA, CFTEA) si existen
+    const datosBackend = {
+        TEA: data.TEA || null,
+        CFTEA: data.CFTEA || null
+    };
+    
+    const metricas = calcularMetricas(data.TNA, monto, cuotas, totalPagar, datosBackend);
+    
+    // Mostrar TEM (siempre calculada)
     document.getElementById("tem").textContent = metricas.tem + "%";
-    document.getElementById("tea").textContent = metricas.tea + "%";
+    
+    // Mostrar TEA con indicador si fue calculada
+    document.getElementById("tea").innerHTML = metricas.tea + "%" + 
+        (metricas.teaCalculada ? ' <span style="font-size: 10px; opacity: 0.7;">*</span>' : '');
+    
+    // Mostrar CFT (siempre calculado)
     document.getElementById("cft").textContent = formatearPesos(metricas.cft);
+    
+    // Mostrar CFTNA (siempre calculado)
     document.getElementById("cftna").textContent = metricas.cftna + "%";
+    
+    // Actualizar sección de CFTEA (nueva métrica)
+    // Si existe el elemento, actualizarlo
+    const cfteaElement = document.getElementById("cftea");
+    if (cfteaElement) {
+        cfteaElement.innerHTML = metricas.cftea + "%" + 
+            (metricas.cfteaCalculada ? ' <span style="font-size: 10px; opacity: 0.7;">*</span>' : '');
+    }
 
     // Actualizar gráficos
     actualizarGraficos(tabla);
@@ -188,9 +222,18 @@ function mostrarComparacion() {
     const monto = datoPrincipal.monto;
     const cuotas = datoPrincipal.cuotas;
 
-    // Calcular métricas para comparación
-    const metricas1 = calcularMetricas(datoPrincipal.data.TNA, monto, cuotas, total1);
-    const metricas2 = calcularMetricas(datoComparacion.data.TNA, monto, cuotas, total2);
+    // Calcular métricas para comparación con datos del backend
+    const datosBackend1 = {
+        TEA: datoPrincipal.data.TEA || null,
+        CFTEA: datoPrincipal.data.CFTEA || null
+    };
+    const datosBackend2 = {
+        TEA: datoComparacion.data.TEA || null,
+        CFTEA: datoComparacion.data.CFTEA || null
+    };
+    
+    const metricas1 = calcularMetricas(datoPrincipal.data.TNA, monto, cuotas, total1, datosBackend1);
+    const metricas2 = calcularMetricas(datoComparacion.data.TNA, monto, cuotas, total2, datosBackend2);
 
     // Actualizar subtítulos KPI con comparación
     const difTotal = total2 - total1;
@@ -219,14 +262,24 @@ function mostrarComparacion() {
     document.getElementById("temComp").innerHTML = 
         `${datoComparacion.banco}: ${metricas2.tem}% <span class="${difTEM > 0 ? 'diferencia-negativa' : 'diferencia-positiva'}">(${difTEM > 0 ? '+' : ''}${difTEM.toFixed(2)}%)</span>`;
     
+    const indicadorTEA2 = metricas2.teaCalculada ? ' <span style="font-size: 10px;">*</span>' : '';
     document.getElementById("teaComp").innerHTML = 
-        `${datoComparacion.banco}: ${metricas2.tea}% <span class="${difTEA > 0 ? 'diferencia-negativa' : 'diferencia-positiva'}">(${difTEA > 0 ? '+' : ''}${difTEA.toFixed(2)}%)</span>`;
+        `${datoComparacion.banco}: ${metricas2.tea}%${indicadorTEA2} <span class="${difTEA > 0 ? 'diferencia-negativa' : 'diferencia-positiva'}">(${difTEA > 0 ? '+' : ''}${difTEA.toFixed(2)}%)</span>`;
     
     document.getElementById("cftComp").innerHTML = 
         `${datoComparacion.banco}: ${formatearPesos(metricas2.cft)} <span class="${difCFT > 0 ? 'diferencia-negativa' : 'diferencia-positiva'}">(${difCFT > 0 ? '+' : ''}${formatearPesos(difCFT)})</span>`;
     
     document.getElementById("cftnaComp").innerHTML = 
         `${datoComparacion.banco}: ${metricas2.cftna}% <span class="${difCFTNA > 0 ? 'diferencia-negativa' : 'diferencia-positiva'}">(${difCFTNA > 0 ? '+' : ''}${difCFTNA.toFixed(2)}%)</span>`;
+
+    // Actualizar CFTEA si existe el elemento
+    const cfteaCompElement = document.getElementById("cfteaComp");
+    if (cfteaCompElement) {
+        const difCFTEA = parseFloat(metricas2.cftea) - parseFloat(metricas1.cftea);
+        const indicadorCFTEA2 = metricas2.cfteaCalculada ? ' <span style="font-size: 10px;">*</span>' : '';
+        cfteaCompElement.innerHTML = 
+            `${datoComparacion.banco}: ${metricas2.cftea}%${indicadorCFTEA2} <span class="${difCFTEA > 0 ? 'diferencia-negativa' : 'diferencia-positiva'}">(${difCFTEA > 0 ? '+' : ''}${difCFTEA.toFixed(2)}%)</span>`;
+    }
 
     // Mostrar sección de comparación
     document.getElementById("comparacionSection").style.display = "block";
@@ -257,6 +310,7 @@ function actualizarGraficos(tabla) {
         },
         options: {
             responsive: true,
+            maintainAspectRatio: true,
             plugins: {
                 legend: { display: false }
             },
@@ -290,6 +344,7 @@ function actualizarGraficos(tabla) {
         },
         options: {
             responsive: true,
+            maintainAspectRatio: true,
             plugins: {
                 legend: { position: 'bottom' }
             }
@@ -315,6 +370,7 @@ function actualizarGraficos(tabla) {
         },
         options: {
             responsive: true,
+            maintainAspectRatio: true,
             scales: {
                 x: { stacked: true },
                 y: { 
@@ -344,6 +400,7 @@ function actualizarGraficos(tabla) {
         },
         options: {
             responsive: true,
+            maintainAspectRatio: true,
             plugins: {
                 legend: { display: false }
             },
@@ -385,6 +442,7 @@ function actualizarGraficosComparacion() {
         },
         options: {
             responsive: true,
+            maintainAspectRatio: true,
             plugins: {
                 legend: { display: false }
             },
@@ -416,6 +474,7 @@ function actualizarGraficosComparacion() {
         },
         options: {
             responsive: true,
+            maintainAspectRatio: true,
             plugins: {
                 legend: { display: false }
             },
@@ -455,6 +514,7 @@ function actualizarGraficosComparacion() {
         },
         options: {
             responsive: true,
+            maintainAspectRatio: true,
             plugins: {
                 legend: { position: 'bottom' }
             },
@@ -486,6 +546,7 @@ function actualizarGraficosComparacion() {
         },
         options: {
             responsive: true,
+            maintainAspectRatio: true,
             plugins: {
                 legend: { position: 'bottom' }
             }
@@ -507,8 +568,22 @@ function actualizarTablaResumen() {
     const monto = datoPrincipal.monto;
     const cuotas = datoPrincipal.cuotas;
 
-    const metricas1 = calcularMetricas(datoPrincipal.data.TNA, monto, cuotas, total1);
-    const metricas2 = calcularMetricas(datoComparacion.data.TNA, monto, cuotas, total2);
+    const datosBackend1 = {
+        TEA: datoPrincipal.data.TEA || null,
+        CFTEA: datoPrincipal.data.CFTEA || null
+    };
+    const datosBackend2 = {
+        TEA: datoComparacion.data.TEA || null,
+        CFTEA: datoComparacion.data.CFTEA || null
+    };
+
+    const metricas1 = calcularMetricas(datoPrincipal.data.TNA, monto, cuotas, total1, datosBackend1);
+    const metricas2 = calcularMetricas(datoComparacion.data.TNA, monto, cuotas, total2, datosBackend2);
+
+    const indicadorTEA1 = metricas1.teaCalculada ? ' <span style="font-size: 10px; opacity: 0.6;" title="Valor calculado">*</span>' : '';
+    const indicadorTEA2 = metricas2.teaCalculada ? ' <span style="font-size: 10px; opacity: 0.6;" title="Valor calculado">*</span>' : '';
+    const indicadorCFTEA1 = metricas1.cfteaCalculada ? ' <span style="font-size: 10px; opacity: 0.6;" title="Valor calculado">*</span>' : '';
+    const indicadorCFTEA2 = metricas2.cfteaCalculada ? ' <span style="font-size: 10px; opacity: 0.6;" title="Valor calculado">*</span>' : '';
 
     let html = `
         <table>
@@ -551,8 +626,8 @@ function actualizarTablaResumen() {
                 </tr>
                 <tr>
                     <td><strong>TEA</strong></td>
-                    <td>${metricas1.tea}%</td>
-                    <td>${metricas2.tea}%</td>
+                    <td>${metricas1.tea}%${indicadorTEA1}</td>
+                    <td>${metricas2.tea}%${indicadorTEA2}</td>
                     <td class="${(parseFloat(metricas2.tea) - parseFloat(metricas1.tea)) > 0 ? 'diferencia-negativa' : 'diferencia-positiva'}">
                         ${(parseFloat(metricas2.tea) - parseFloat(metricas1.tea)).toFixed(2)}%
                     </td>
@@ -597,8 +672,19 @@ function actualizarTablaResumen() {
                         ${(parseFloat(metricas2.cftna) - parseFloat(metricas1.cftna)).toFixed(2)}%
                     </td>
                 </tr>
+                <tr>
+                    <td><strong>CFTEA</strong></td>
+                    <td>${metricas1.cftea}%${indicadorCFTEA1}</td>
+                    <td>${metricas2.cftea}%${indicadorCFTEA2}</td>
+                    <td class="${(parseFloat(metricas2.cftea) - parseFloat(metricas1.cftea)) > 0 ? 'diferencia-negativa' : 'diferencia-positiva'}">
+                        ${(parseFloat(metricas2.cftea) - parseFloat(metricas1.cftea)).toFixed(2)}%
+                    </td>
+                </tr>
             </tbody>
         </table>
+        <div style="margin-top: 15px; padding: 10px; background: #f0f0f0; border-radius: 6px; font-size: 12px; color: #666;">
+            <strong>Nota:</strong> Los valores marcados con asterisco (*) son calculados. Los valores sin asterisco provienen directamente del banco.
+        </div>
     `;
 
     // Agregar análisis de ahorro
