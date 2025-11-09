@@ -36,16 +36,16 @@
         "CFTEA": 292.22
     },
     {
-        "Banco": "BNA",
-        "TNA": 44.62,
-        "TEA": 54.99,
-        "CFTEA": null
-    },
-    {
         "Banco": "Galicia",
         "TNA": 84.0,
         "TEA": 125.22,
         "CFTEA": 165.29
+    },
+    {
+        "Banco": "BNA",
+        "TNA": 44.62,
+        "TEA": 54.99,
+        "CFTEA": null
     },
     {
         "Banco": "BCRA",

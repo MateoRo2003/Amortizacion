@@ -21,23 +21,44 @@ app = Flask(__name__, static_folder=".", template_folder=".")
 def serve_root_files(filename):
     return send_from_directory('.', filename)
 
-def generar_tabla_amortizacion(monto, n_cuotas, tna):
-    saldo = monto
+def generar_tabla_amortizacion(monto, n_cuotas, tna, sistema='frances'):
     i = (tna / 100) / 12
-    cuota_fija = monto * i / (1 - (1 + i) ** -n_cuotas)
-
     tabla = []
-    for n in range(1, n_cuotas + 1):
-        interes = saldo * i
-        amortizacion = cuota_fija - interes
-        saldo -= amortizacion
-        tabla.append({
-            "Cuota": n,
-            "Cuota_total": round(cuota_fija, 2),
-            "Interes": round(interes, 2),
-            "Amortizacion": round(amortizacion, 2),
-            "Saldo": round(max(saldo, 0), 2)
-        })
+    
+    if sistema == 'frances':
+        # Sistema Francés (cuota constante)
+        cuota_fija = monto * i / (1 - (1 + i) ** -n_cuotas)
+        saldo = monto
+        
+        for n in range(1, n_cuotas + 1):
+            interes = saldo * i
+            amortizacion = cuota_fija - interes
+            saldo -= amortizacion
+            tabla.append({
+                "Cuota": n,
+                "Cuota_total": round(cuota_fija, 2),
+                "Interes": round(interes, 2),
+                "Amortizacion": round(amortizacion, 2),
+                "Saldo": round(max(saldo, 0), 2)
+            })
+    
+    else:
+        # Sistema Alemán (amortización constante)
+        amortizacion_constante = monto / n_cuotas
+        saldo = monto
+        
+        for n in range(1, n_cuotas + 1):
+            interes = saldo * i
+            cuota_total = amortizacion_constante + interes
+            saldo -= amortizacion_constante
+            tabla.append({
+                "Cuota": n,
+                "Cuota_total": round(cuota_total, 2),
+                "Interes": round(interes, 2),
+                "Amortizacion": round(amortizacion_constante, 2),
+                "Saldo": round(max(saldo, 0), 2)
+            })
+    
     return tabla
 
 def cargar_tasas():
@@ -78,94 +99,7 @@ def api_calcular():
     monto = float(data.get("monto", 0))
     n_cuotas = int(data.get("cuotas", 1))
     banco = data.get("banco")
-
-    if banco not in scrapers_dict:
-        return jsonify({"error": "Banco no válido"}), 400
-
-    tasas_guardadas = cargar_tasas()
-    tna = tea = cftea = None
-
-    # Buscar en tasas.json
-    if tasas_guardadas:
-        for t in tasas_guardadas:
-            if t["Banco"] == banco:
-                tna = t.get("TNA")
-                tea = t.get("TEA")
-                cftea = t.get("CFTEA")
-                break
-
-    # Solo scrapea si falta TNA
-    if tna is None:
-        scraper = scrapers_dict[banco]
-        tasas = scraper.obtener_tasas()
-        tna = tasas.get("TNA")
-        tea = tasas.get("TEA")
-        cftea = tasas.get("CFTEA")
-
-        if tna:
-            guardar_tasa_individual(banco, tna, tea, cftea)
-
-    if tna is None:
-        return jsonify({"error": "No se pudo obtener TNA del banco"}), 500
-
-    tabla = generar_tabla_amortizacion(monto, n_cuotas, tna)
-
-    return jsonify({
-        "Banco": banco,
-        "TNA": tna,
-        "TEA": tea,
-        "CFTEA": cftea,
-        "Tabla": tabla
-    })
-
-    data = request.json
-    monto = float(data.get("monto", 0))
-    n_cuotas = int(data.get("cuotas", 1))
-    banco = data.get("banco")
-
-    if banco not in scrapers_dict:
-        return jsonify({"error": "Banco no válido"}), 400
-
-    tasas_guardadas = cargar_tasas()
-    tna = tea = cftea = None
-
-    # Buscar en tasas.json
-    if tasas_guardadas:
-        for t in tasas_guardadas:
-            if t["Banco"] == banco:
-                tna = t.get("TNA")
-                tea = t.get("TEA")
-                cftea = t.get("CFTEA")
-                break
-
-    # Solo scrapea si no hay TNA
-    if tna is None:
-        scraper = scrapers_dict[banco]
-        tasas = scraper.obtener_tasas()
-        tna = tasas.get("TNA")
-        tea = tasas.get("TEA")
-        cftea = tasas.get("CFTEA")
-
-        if tna:
-            guardar_tasa_individual(banco, tna, tea, cftea)
-
-    if tna is None:
-        return jsonify({"error": "No se pudo obtener TNA del banco"}), 500
-
-    tabla = generar_tabla_amortizacion(monto, n_cuotas, tna)
-
-    return jsonify({
-        "Banco": banco,
-        "TNA": tna,
-        "TEA": tea,      # puede ser None
-        "CFTEA": cftea,  # puede ser None
-        "Tabla": tabla
-    })
-    data = request.json
-    monto = float(data.get("monto", 0))
-    n_cuotas = int(data.get("cuotas", 1))
-    banco = data.get("banco")
-
+    sistema = data.get("sistema", "frances")  # Nuevo parámetro
     if banco not in scrapers_dict:
         return jsonify({"error": "Banco no válido"}), 400
 
@@ -197,12 +131,13 @@ def api_calcular():
     if tna is None:
         return jsonify({"error": "No se pudo obtener TNA del banco"}), 500
 
-    tabla = generar_tabla_amortizacion(monto, n_cuotas, tna)
+    tabla = generar_tabla_amortizacion(monto, n_cuotas, tna, sistema)
 
     return jsonify({
         "Banco": banco,
         "TNA": tna,
         "TEA": tea,
+        "Sistema": sistema,  # Incluir sistema en la respuesta
         "CFTEA": cftea,
         "Tabla": tabla
     })
