@@ -1,0 +1,35 @@
+name: Actualizar Tasas
+
+on:
+  schedule:
+    - cron: "0 * * * *"   # Cada una hora
+  workflow_dispatch:       # Para ejecutarla manualmente
+
+jobs:
+  run-script:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Configurar Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Instalar dependencias
+        run: |
+          pip install -r requirements.txt
+
+      - name: Ejecutar script
+        run: |
+          python cron_actualizar_tasas.py
+
+      - name: Confirmar cambios en tasas.json
+        run: |
+          git config user.name "MateoRo2003"
+          git config user.email "mateorojasarce2003@gmail.com"
+          git add tasas.json
+          git commit -m "Actualización automática de tasas" || echo "No hay cambios"
+          git push || echo "No se pudo pushear"
