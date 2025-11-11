@@ -394,11 +394,11 @@ function validarCampos() {
         return false;
     }
 
-    if (monto > 10000000) {
+    if (monto > 25000000) {
         Swal.fire({
             icon: "warning",
             title: "Monto muy alto",
-            text: "El monto no puede superar los $10.000.000"
+            text: "El monto no puede superar los $25.000.000"
         });
         return false;
     }
@@ -426,7 +426,7 @@ function validarCampos() {
         Swal.fire({
             icon: "warning",
             title: "Demasiadas cuotas",
-            text: "Ingresá un valor menor o igual a 84 cuotas (7 años)."
+            text: "Ingresá un valor menor o igual a 72 cuotas (6 años)."
         });
         return false;
     }
@@ -875,7 +875,168 @@ function actualizarTablaResumen() {
 
     document.getElementById("tablaResumenComparativo").innerHTML = html;
 }
+function exportarAExcel() {
+    if (!datoPrincipal) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'No hay datos',
+            text: 'Primero debes calcular un préstamo para exportar.'
+        });
+        return;
+    }
 
+    const sistema = document.getElementById("sistemaAmortizacion").value;
+    const sistemaLabel = sistema === 'aleman' ? 'Sistema Alemán' : 'Sistema Francés';
+    const tabla = datoPrincipal.data.Tabla;
+    
+    // Calcular totales
+    const totalPagar = tabla.reduce((sum, row) => sum + row.Cuota_total, 0);
+    const totalInteres = tabla.reduce((sum, row) => sum + row.Interes, 0);
+    const totalAmortizacion = tabla.reduce((sum, row) => sum + row.Amortizacion, 0);
+    
+    // Crear libro de trabajo
+    const wb = XLSX.utils.book_new();
+    
+    // Datos para la hoja principal
+    const datosHoja = [];
+    
+    // Título principal
+    datosHoja.push(['PANEL FINANCIERO - TABLA DE AMORTIZACIÓN'], ['']);
+    
+    // Información del préstamo
+    datosHoja.push(
+        ['INFORMACIÓN DEL PRÉSTAMO', '', '', '', ''],
+        ['Sistema de Amortización:', sistemaLabel, '', 'Fecha Exportación:', new Date().toLocaleDateString('es-AR')],
+        ['Banco:', datoPrincipal.banco, '', 'Hora:', new Date().toLocaleTimeString('es-AR')],
+        ['Monto del Préstamo:', formatearPesos(datoPrincipal.monto), '', 'Exportado por:', 'Panel Financiero'],
+        ['Cantidad de Cuotas:', datoPrincipal.cuotas, '', 'Versión:', '1.0'],
+        ['TNA Aplicada:', datoPrincipal.data.TNA + '%', '', '', ''],
+        ['', '', '', '', ''],
+        ['RESUMEN FINANCIERO', '', '', '', ''],
+        ['Total a Pagar:', formatearPesos(totalPagar), '', 'Total Interés:', formatearPesos(totalInteres)],
+        ['Total Amortización:', formatearPesos(totalAmortizacion), '', 'Costo Financiero:', formatearPesos(totalInteres)],
+        ['', '', '', '', ''],
+        ['', '', '', '', '']
+    );
+    
+    // Encabezados de la tabla
+    datosHoja.push([
+        'N° CUOTA',
+        'CUOTA TOTAL',
+        'INTERÉS',
+        'AMORTIZACIÓN',
+        'SALDO PENDIENTE'
+    ]);
+    
+    // Datos de la tabla
+    tabla.forEach(fila => {
+        datosHoja.push([
+            fila.Cuota,
+            fila.Cuota_total,
+            fila.Interes,
+            fila.Amortizacion,
+            fila.Saldo
+        ]);
+    });
+    
+    // Totales al final
+    datosHoja.push(
+        ['', '', '', '', ''],
+        ['TOTALES', totalPagar, totalInteres, totalAmortizacion, '-']
+    );
+    
+    // Crear hoja de trabajo
+    const ws = XLSX.utils.aoa_to_sheet(datosHoja);
+    
+    // Aplicar estilos y formato
+    if (!ws['!merges']) ws['!merges'] = [];
+    
+    // Fusionar celdas para títulos
+    ws['!merges'].push(
+        { s: { r: 0, c: 0 }, e: { r: 0, c: 4 } }, // Título principal
+        { s: { r: 2, c: 0 }, e: { r: 2, c: 1 } }, // Información del préstamo
+        { s: { r: 8, c: 0 }, e: { r: 8, c: 1 } }, // Resumen financiero
+        { s: { r: 12 + tabla.length, c: 0 }, e: { r: 12 + tabla.length, c: 0 } } // Totales
+    );
+    
+    // Definir anchos de columna
+    ws['!cols'] = [
+        { wch: 10 }, // Columna A: N° Cuota
+        { wch: 15 }, // Columna B: Cuota Total
+        { wch: 15 }, // Columna C: Interés
+        { wch: 15 }, // Columna D: Amortización
+        { wch: 18 }  // Columna E: Saldo Pendiente
+    ];
+    
+    // Agregar hoja al libro
+    XLSX.utils.book_append_sheet(wb, ws, 'Tabla de Amortización');
+    
+    // Crear hoja de resumen
+    crearHojaResumen(wb, sistemaLabel, totalPagar, totalInteres, totalAmortizacion);
+    
+    // Generar archivo
+    const fileName = `Amortizacion_${datoPrincipal.banco}_${sistemaLabel.replace(' ', '_')}_${new Date().toISOString().split('T')[0]}.xlsx`;
+    XLSX.writeFile(wb, fileName);
+    
+    // Mostrar confirmación
+    Swal.fire({
+        icon: 'success',
+        title: 'Exportado exitosamente',
+        html: `
+            <div style="text-align: left; font-size: 14px;">
+                <p><strong>Archivo:</strong> ${fileName}</p>
+                <p><strong>Sistema:</strong> ${sistemaLabel}</p>
+                <p><strong>Banco:</strong> ${datoPrincipal.banco}</p>
+                <p><strong>Formato:</strong> Excel (.xlsx)</p>
+                <p style="margin-top: 10px; color: #666;">El archivo incluye formato profesional y múltiples hojas.</p>
+            </div>
+        `,
+        showCancelButton: true
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Esto abrirá la carpeta de descargas en algunos navegadores
+            window.open('file:///C:/Users/' + (window.userName || 'Usuario') + '/Downloads');
+        }
+    });
+}
+
+function crearHojaResumen(wb, sistemaLabel, totalPagar, totalInteres, totalAmortizacion) {
+    const datosResumen = [];
+    
+    // Encabezado del resumen
+    datosResumen.push(
+        ['RESUMEN EJECUTIVO - ANÁLISIS FINANCIERO'],
+        [''],
+        ['PARÁMETROS DEL PRÉSTAMO', '', 'MÉTRICAS FINANCIERAS'],
+        ['Sistema de Amortización:', sistemaLabel, 'Total a Pagar:', formatearPesos(totalPagar)],
+        ['Banco:', datoPrincipal.banco, 'Monto del Préstamo:', formatearPesos(datoPrincipal.monto)],
+        ['Cuotas:', datoPrincipal.cuotas, 'Interés Total:', formatearPesos(totalInteres)],
+        ['TNA:', datoPrincipal.data.TNA + '%', 'Costo Financiero:', formatearPesos(totalInteres)],
+        ['', '', 'Relación Interés/Capital:', (totalInteres / totalAmortizacion * 100).toFixed(2) + '%'],
+        [''],
+        ['ANÁLISIS POR CUOTAS', '', 'INDICADORES CLAVE'],
+        ['Primera Cuota:', formatearPesos(datoPrincipal.data.Tabla[0].Cuota_total), 'TEA Aproximada:', (Math.pow(1 + datoPrincipal.data.TNA/100/12, 12) - 1).toFixed(2) + '%'],
+        ['Última Cuota:', formatearPesos(datoPrincipal.data.Tabla[datoPrincipal.data.Tabla.length - 1].Cuota_total), 'TEM:', (datoPrincipal.data.TNA/12).toFixed(2) + '%'],
+        ['Cuota Promedio:', formatearPesos(totalPagar / datoPrincipal.cuotas), 'CFTNA Aprox:', (totalInteres / datoPrincipal.monto * 100).toFixed(2) + '%'],
+        [''],
+        ['DISTRIBUCIÓN DE PAGOS', '', 'EFICIENCIA DEL PRÉSTAMO'],
+        ['Capital:', formatearPesos(totalAmortizacion), 'Porcentaje de Interés:', (totalInteres / totalPagar * 100).toFixed(2) + '%'],
+        ['Intereses:', formatearPesos(totalInteres), 'Porcentaje de Capital:', (totalAmortizacion / totalPagar * 100).toFixed(2) + '%'],
+        ['Total:', formatearPesos(totalPagar), 'Relación Costo/Beneficio:', (totalInteres / totalAmortizacion).toFixed(2) + ':1']
+    );
+    
+    const wsResumen = XLSX.utils.aoa_to_sheet(datosResumen);
+    
+    // Configurar anchos de columna para resumen
+    wsResumen['!cols'] = [
+        { wch: 25 }, // Columna A
+        { wch: 20 }, // Columna B  
+        { wch: 25 }, // Columna C
+        { wch: 20 }  // Columna D
+    ];
+    
+    XLSX.utils.book_append_sheet(wb, wsResumen, 'Resumen Ejecutivo');
+}
 function actualizarTabla(tabla) {
     const sistema = document.getElementById("sistemaAmortizacion").value;
     const sistemaLabel = sistema === 'aleman' ? 'Sistema Alemán' : 'Sistema Francés';
